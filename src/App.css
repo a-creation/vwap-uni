@@ -15,13 +15,16 @@
 
 .App-header {
   background-color: #282c34;
-  min-height: 100vh;
+  min-height: 100vh !important;
+  width: 100vw;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   font-size: calc(10px + 2vmin);
   color: white;
+  padding-top:5vh;
+  overflow: auto;
 }
 
 .App-link {
@@ -35,4 +38,51 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.graphContainer {
+  background-color: rgb(68, 131, 90);
+  width: 800px;
+  height: 600px;
+  border-radius: 24px;
+  border: 1px transparent;
+  padding: 6px;
+  margin: 1vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+
+.tradeContainer {
+  background-color: rgba(255, 255, 255, 0.3);
+  width: 400px;
+  height: 300px;
+  border-radius: 24px;
+  border: 1px white;
+  border-style: solid;
+  padding: 6px;
+  margin: 1vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+}
+
+.progressContainer {
+  background-color: rgba(86, 86, 86, 0.343);
+  width: 400px;
+  height: 300px;
+  border-radius: 24px;
+  border: 1px rgba(86, 86, 86, 0.343);
+  border-style: solid;
+  padding: 6px;
+  margin: 1vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  
 }
