@@ -1,9 +1,8 @@
 Uniswap Volume-weighted Average Price Bot
 
-To begin application:
-
+To begin server:
 cd server 
 node server.js
 
-cd ..
+To begin application:
 npm start
