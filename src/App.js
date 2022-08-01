@@ -48,21 +48,36 @@ function App() {
       console.log('Connected to Websocket server!')
     });
 
+    return () => {
+      socket.off('connect');
+    };
+  }, [])
+
+  useEffect(() => {
     socket.on('tx', (msg) => {
       console.log('received tx', msg)
       const existingTransactions = transactions.slice()
       existingTransactions.push(msg)
+      console.log('existingTransactions', existingTransactions)
       setTransactions(existingTransactions)
-      let newProgress = swapProgress + 4
+      console.log('swapProgress', swapProgress)
+      let newProgress = swapProgress + 10
+      console.log('newProgress', newProgress)
       setSwapProgress(newProgress)
     });
 
+    return () => {
+      socket.off('tx');
+    };
 
-  }, [])
+  }, [transactions, swapProgress])
 
   useEffect(()=> {
     const onLoad = async () => {
       const provider = await new ethers.providers.Web3Provider(window.ethereum)
+      // allTokens.forEach(token => {
+      //   new Contract
+      // })
       const wethContract = new ethers.Contract(WETH_address, ERC20ABI, provider)
       const usdcContract = new ethers.Contract(USDC_address, ERC20ABI, provider)
       setUsdcContract(usdcContract)
@@ -94,6 +109,45 @@ function App() {
 
     setTransformedData(transformedData)
 
+    const [averaged_data, averaged_data_total] = averageData(transformedData)
+    const ratio_data = averaged_data.map(ele => {return (ele.value/averaged_data_total)})
+
+
+    const chart2 = createChart(document.getElementById("innerGraphContainer"), CHART_OPTIONS2)
+    const histogramSeries2 = chart2.addHistogramSeries({color: "#c2d1c8"});
+    histogramSeries2.setData(averaged_data);
+    chart2.timeScale().fitContent()
+
+    console.log('averaged_data_total',averaged_data_total)
+
+    setAveragedData(averaged_data)
+    setRatioData(ratio_data)
+
+    let res2 = await axios.get(process.env.REACT_APP_SERVER_URL + "/30dayvolumedata")
+
+    let transformedData2 = res2.data.map(ele => {
+      return {
+        time: Math.floor((new Date(ele.hour)).getTime() / 1000),
+        value:  Math.floor(parseFloat(ele.hourly_volume_usdc))
+      }
+    })
+    transformedData2.sort((a,b) => {
+      if(a.time < b.time) return -1
+      else return 1
+    })
+
+    const [averaged_data_30, averaged_data_total_30] = averageData(transformedData2)
+
+
+    const chart3 = createChart(document.getElementById("innerGraphContainer3"), CHART_OPTIONS2)
+    const histogramSeries3 = chart3.addHistogramSeries({color: "#c2d1c8"});
+    histogramSeries3.setData(averaged_data_30);
+    chart3.timeScale().fitContent()
+
+  }
+
+  const averageData = (transformedData) => {
+
     const averaged_data = []
     let averaged_data_total = 0
 
@@ -117,17 +171,7 @@ function App() {
       averaged_data_total+= avg_value
     }
 
-    const chart2 = createChart(document.getElementById("innerGraphContainer"), CHART_OPTIONS2)
-    const histogramSeries2 = chart2.addHistogramSeries({color: "#c2d1c8"});
-    histogramSeries2.setData(averaged_data);
-    chart2.timeScale().fitContent()
-
-    console.log('averaged_data_total',averaged_data_total)
-
-    const ratio_data = averaged_data.map(ele => {return (ele.value/averaged_data_total)})
-
-    setAveragedData(averaged_data)
-    setRatioData(ratio_data)
+    return [averaged_data, averaged_data_total]
 
   }
 
@@ -142,7 +186,7 @@ function App() {
     const usdcbalance = await usdcContract.balanceOf(address)
     const wethbalance = await wethContract.balanceOf(address)
 
-    console.log(ethers.utils.formatUnits(usdcbalance, 6));
+    // console.log(ethers.utils.formatUnits(usdcbalance, 6));
     const ethbalance = await provider.getBalance(address);
     // console.log('ethbalance', Number(ethers.utils.formatEther(ethbalance)))
     setUsdcBalance(Number(ethers.utils.formatUnits(usdcbalance, 6)))
@@ -155,8 +199,6 @@ function App() {
 
     setSwapped(true)
 
-    console.log('usdcAmount', usdcAmount)
-    console.log('wethAmount', wethAmount)
     const res = await axios.post(process.env.REACT_APP_SERVER_URL + "/swap", {
       amount: (baseCurrency == "USDC") ? usdcAmount : wethAmount,
       baseCurrency,
@@ -171,9 +213,15 @@ function App() {
     if(targetGraph == 1){
       document.getElementById('innerGraphContainer').style.display = "none"
       document.getElementById('innerGraphContainer2').style.display = "flex"
+      document.getElementById('innerGraphContainer3').style.display = "none"
+    } else if(targetGraph == 0){
+      document.getElementById('innerGraphContainer2').style.display = "none"
+      document.getElementById('innerGraphContainer3').style.display = "none"
+      document.getElementById('innerGraphContainer').style.display = "flex"
     } else {
       document.getElementById('innerGraphContainer2').style.display = "none"
-      document.getElementById('innerGraphContainer').style.display = "flex"
+      document.getElementById('innerGraphContainer').style.display = "none"
+      document.getElementById('innerGraphContainer3').style.display = "flex"
     }
   }
 
@@ -235,9 +283,11 @@ function App() {
               <Select variant='flushed' width="90%" color="black" borderColor="transparent" onChange={(e) => {setCurrentGraph(e.target.value); renderGraph(e.target.value)}} style={{marginBottom:'20px'}}>
                 <option value='0'>Average Hourly Volume of USDC/ETH UniV3 Pool in USD (over past seven days)</option>
                 <option value='1'>Hourly Volume of USDC/ETH UniV3 Pool in USD (past seven days)</option>
+                <option value='2'>Average Hourly Volume of USDC/ETH UniV3 Pool in USD (past thirty days)</option>
               </Select>
               <div id="innerGraphContainer"></div>
               <div id="innerGraphContainer2" style={{display: "none"}}></div>
+              <div id="innerGraphContainer3" style={{display: "none"}}></div>
             </div>
           </div>
         </div>

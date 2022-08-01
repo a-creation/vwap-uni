@@ -89,7 +89,7 @@ const swapTransaction = async (baseToken, quoteToken, baseContract, decimals, sw
   const tx = await signer.sendTransaction(transaction);
   
   console.log("Transaction!", tx.hash);
-
+  
   const receipt = await tx.wait(1);
 
   let transfer_out_amount
@@ -122,6 +122,16 @@ app.get('/volumedata', async (req, res) => {
 
   await client.connect()
   const collection = client.db("uniswap_v3").collection("volume_usdc");
+  const cursor = await collection.find({});
+  const data_arr = await cursor.toArray()
+  res.send(data_arr)
+
+})
+
+app.get('/30dayvolumedata', async (req, res) => {
+
+  await client.connect()
+  const collection = client.db("uniswap_v3").collection("volume_usd_thirty_days");
   const cursor = await collection.find({});
   const data_arr = await cursor.toArray()
   res.send(data_arr)
@@ -165,8 +175,8 @@ app.post('/swap', async (req, res) => {
   //   scheduled_txs.stop()
   // })
 
-  // TESTING CODE: Schedule for every 5th second, stop after 1 minute
-  const scheduled_txs = cron.schedule(`*/20 * * * * *`, () => {
+  // TESTING CODE: Schedule for every 30th second, stop after 1 minute
+  const scheduled_txs = cron.schedule(`*/30 * * * * *`, () => {
     const date = new Date(Date.now())
     const UTCHour = date.getUTCHours()
 
@@ -176,7 +186,7 @@ app.post('/swap', async (req, res) => {
     
   });
 
-  const stopDate = date.setMinutes(date.getMinutes() + 2)
+  const stopDate = date.setMinutes(date.getMinutes() + 3)
 
   console.log('Start Date:', date)
   console.log('Stop Date:', stopDate)
